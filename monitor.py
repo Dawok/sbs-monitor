@@ -2,6 +2,7 @@ import requests
 import json
 import time
 import os
+from bs4 import BeautifulSoup
 
 # Load configuration from config.json
 with open('config.json', 'r') as config_file:
@@ -21,18 +22,29 @@ def get_jsonp(url):
     return json.loads(json_str)
 
 # Function to send a message to Discord
-def send_discord_webhook(board_no, title, reg_date):
+def send_discord_webhook(board_no, title, reg_date, thumbnail_url):
     webhook_url = DISCORD_WEBHOOK_URL
     data = {
         "embeds": [{
             "title": title,
             "description": f"A new post is available. [Click here to view](https://programs.sbs.co.kr/enter/gayo/visualboard/54795?cmd=view&page=1&board_no={board_no})",
             "color": 3066993,
-            "timestamp": reg_date
+            "timestamp": reg_date,
+            "thumbnail": {
+                "url": thumbnail_url
+            }
         }]
     }
     response = requests.post(webhook_url, json=data)
     return response
+
+# Function to extract image URL from CONTENT field
+def extract_image_url(content):
+    soup = BeautifulSoup(content, 'html.parser')
+    img_tag = soup.find('img')
+    if img_tag:
+        return img_tag['src']
+    return None
 
 # Function to load checked board numbers from a file
 def load_checked_numbers(filename):
@@ -62,11 +74,16 @@ def main():
                 current_number = post['NO']
                 title = post['TITLE']
                 reg_date = post['REG_DATE']
+                content = post['CONTENT']
 
                 if current_number not in checked_numbers:
                     print(f"New post detected with board number: {current_number}")
                     checked_numbers.add(current_number)
-                    send_discord_webhook(current_number, title, reg_date)
+                    
+                    # Extract thumbnail URL from content
+                    thumbnail_url = extract_image_url(content)
+                    
+                    send_discord_webhook(current_number, title, reg_date, thumbnail_url)
                     save_checked_numbers(CHECKED_FILE, checked_numbers)
                     new_posts_detected = True
             
