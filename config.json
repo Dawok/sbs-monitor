@@ -1,0 +1,6 @@
+{
+    "API_URL": "https://api.board.sbs.co.kr/bbs/V2.0/basic/board/lists?callback=boardListCallback_inkigayo_pt01&offset=0&limit=16&action_type=callback&board_code=inkigayo_pt01",
+    "DISCORD_WEBHOOK_URL": "https://discord.com/api/webhooks/your_webhook_url",
+    "CHECK_INTERVAL": 3600,
+    "CHECKED_FILE": "checked.json"
+}
