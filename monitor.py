@@ -2,6 +2,7 @@ import requests
 import json
 import time
 import os
+import re
 from bs4 import BeautifulSoup
 
 # Load configuration from config.json
@@ -13,6 +14,10 @@ API_URL = config['API_URL']
 DISCORD_WEBHOOK_URL = config['DISCORD_WEBHOOK_URL']
 CHECK_INTERVAL = config['CHECK_INTERVAL']
 CHECKED_FILE = config['CHECKED_FILE']
+TITLE_FILTER_REGEX = config['TITLE_FILTER_REGEX']
+
+# Compile the regex pattern for title filtering
+title_pattern = re.compile(TITLE_FILTER_REGEX)
 
 # Function to get JSONP data
 def get_jsonp(url):
@@ -76,16 +81,18 @@ def main():
                 reg_date = post['REG_DATE']
                 content = post['CONTENT']
 
-                if current_number not in checked_numbers:
-                    print(f"New post detected with board number: {current_number}")
-                    checked_numbers.add(current_number)
-                    
-                    # Extract thumbnail URL from content
-                    thumbnail_url = extract_image_url(content)
-                    
-                    send_discord_webhook(current_number, title, reg_date, thumbnail_url)
-                    save_checked_numbers(CHECKED_FILE, checked_numbers)
-                    new_posts_detected = True
+                # Check if the title matches the regex pattern
+                if title_pattern.search(title):
+                    if current_number not in checked_numbers:
+                        print(f"New post detected with board number: {current_number}")
+                        checked_numbers.add(current_number)
+                        
+                        # Extract thumbnail URL from content
+                        thumbnail_url = extract_image_url(content)
+                        
+                        send_discord_webhook(current_number, title, reg_date, thumbnail_url)
+                        save_checked_numbers(CHECKED_FILE, checked_numbers)
+                        new_posts_detected = True
             
             if not new_posts_detected:
                 print("No new posts detected.")
